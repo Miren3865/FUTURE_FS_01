@@ -16,7 +16,6 @@ A modern, responsive portfolio website built with React and   . This portfolio s
 
 - React.js
 - Vite
--   
 - Framer Motion
 - React Router DOM
 
@@ -91,6 +90,6 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 ## Acknowledgments
 
--    for the component library
+- for the component library
 - Framer Motion for animations
 - Unsplash for placeholder images
