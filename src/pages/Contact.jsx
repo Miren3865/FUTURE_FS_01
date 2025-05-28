@@ -43,8 +43,23 @@ const Contact = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    const formspreeURL = 'https://formspree.io/f/manoganz';
+    const backendURL = 'http://localhost:5000/api/contact';
+
     try {
-      const response = await fetch('http://localhost:5000/api/contact', {
+      // Send to Formspree
+      const formspreeRes = await fetch(formspreeURL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+        },
+        body: JSON.stringify(formData),
+      });
+
+      // Send to your backend (e.g., to store in database)
+      const backendRes = await fetch(backendURL, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -52,7 +67,7 @@ const Contact = () => {
         body: JSON.stringify(formData),
       });
 
-      if (response.ok) {
+      if (formspreeRes.ok && backendRes.ok) {
         setSnackbar({
           open: true,
           message: 'Message sent successfully!',
