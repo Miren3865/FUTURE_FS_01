@@ -29,8 +29,6 @@ const Contact = () => {
     severity: 'success',
   });
 
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
   const [ref, inView] = useInView({
     triggerOnce: true,
     threshold: 0.1,
@@ -45,13 +43,12 @@ const Contact = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setIsSubmitting(true);
 
     const formspreeURL = 'https://formspree.io/f/manoganz';
     const backendURL = 'http://localhost:5000/api/contact';
 
     try {
-      // Primary submission to Formspree
+      // Send to Formspree first
       const formspreeRes = await fetch(formspreeURL, {
         method: 'POST',
         headers: {
@@ -62,36 +59,45 @@ const Contact = () => {
       });
 
       if (formspreeRes.ok) {
-        // Success - clear form and show success message
-        setFormData({ name: '', email: '', message: '' });
+        // Show success to user
         setSnackbar({
           open: true,
           message: 'Message sent successfully!',
           severity: 'success',
         });
+        setFormData({ name: '', email: '', message: '' });
 
-        // Secondary submission to backend (fire-and-forget)
-        fetch(backendURL, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(formData),
-        })
-          .then(() => console.log('Message also saved to database'))
-          .catch(err => console.warn('Failed to save to database:', err));
+        // Attempt to send to backend, don't block success if backend fails
+        try {
+          const backendRes = await fetch(backendURL, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(formData),
+          });
+          
+          if (!backendRes.ok) {
+            console.warn('Backend unreachable. Message not stored in DB.');
+          }
+        } catch (backendError) {
+          console.warn('Backend unreachable. Message not stored in DB.', backendError);
+        }
       } else {
-        const errorData = await formspreeRes.json();
-        throw new Error(errorData.error || 'Form submission failed');
+        // Formspree failed
+        setSnackbar({
+          open: true,
+          message: 'Failed to send message via Formspree.',
+          severity: 'error',
+        });
       }
-    } catch (error) {
+    } catch (formspreeError) {
+      // Catch any errors from Formspree
       setSnackbar({
         open: true,
-        message: error.message || 'An error occurred. Please try again.',
+        message: 'An error occurred while sending your message. Please try again.',
         severity: 'error',
       });
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
@@ -161,9 +167,8 @@ const Contact = () => {
                   size="large"
                   fullWidth
                   sx={{ mt: 2 }}
-                  disabled={isSubmitting}
                 >
-                  {isSubmitting ? 'Sending...' : 'Send Message'}
+                  Send Message
                 </Button>
               </form>
             </Paper>
