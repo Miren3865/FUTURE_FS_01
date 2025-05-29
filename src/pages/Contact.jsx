@@ -15,7 +15,6 @@ import { useInView } from 'react-intersection-observer';
 import GitHubIcon from '@mui/icons-material/GitHub';
 import LinkedInIcon from '@mui/icons-material/LinkedIn';
 import EmailIcon from '@mui/icons-material/Email';
-import { MongoClient } from 'mongodb';
 
 const Contact = () => {
   const [formData, setFormData] = useState({
@@ -23,14 +22,11 @@ const Contact = () => {
     email: '',
     message: '',
   });
-
   const [snackbar, setSnackbar] = useState({
     open: false,
     message: '',
     severity: 'success',
   });
-
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [ref, inView] = useInView({
     triggerOnce: true,
@@ -46,49 +42,39 @@ const Contact = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setIsSubmitting(true);
-
-    const formspreeURL = 'https://formspree.io/f/manoganz';
-    const mongoURI = 'mongodb+srv://username:password@cluster0.xyz.mongodb.net/portfolio?retryWrites=true&w=majority';
-
     try {
-      // 1. First send to Formspree (email)
-      const formspreeResponse = await fetch(formspreeURL, {
+      const response = await fetch('https://formspree.io/f/manoganz', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Accept': 'application/json'
+          Accept: 'application/json',
         },
-        body: JSON.stringify(formData)
+        body: JSON.stringify({
+          name: formData.name,
+          email: formData.email,
+          message: formData.message,
+        }),
       });
-
-      if (!formspreeResponse.ok) {
-        throw new Error('Failed to send email');
+      if (response.ok) {
+        setSnackbar({
+          open: true,
+          message: 'Message sent successfully!',
+          severity: 'success',
+        });
+        setFormData({ name: '', email: '', message: '' });
+      } else {
+        setSnackbar({
+          open: true,
+          message: 'Failed to send message. Please try again later.',
+          severity: 'error',
+        });
       }
-
-      // 2. Then save to MongoDB (Note: This should be done server-side in production!)
-      const client = new MongoClient(mongoURI);
-      await client.connect();
-      const db = client.db('portfolio');
-      await db.collection('contacts').insertOne(formData);
-      await client.close();
-
-      // Success
-      setSnackbar({
-        open: true,
-        message: 'Message sent successfully and saved to database!',
-        severity: 'success'
-      });
-      setFormData({ name: '', email: '', message: '' });
-
     } catch (error) {
       setSnackbar({
         open: true,
-        message: error.message || 'An error occurred. Please try again.',
-        severity: 'error'
+        message: 'An error occurred. Please try again later.',
+        severity: 'error',
       });
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
@@ -158,9 +144,8 @@ const Contact = () => {
                   size="large"
                   fullWidth
                   sx={{ mt: 2 }}
-                  disabled={isSubmitting}
                 >
-                  {isSubmitting ? 'Sending...' : 'Send Message'}
+                  Send Message
                 </Button>
               </form>
             </Paper>
