@@ -15,6 +15,7 @@ import { useInView } from 'react-intersection-observer';
 import GitHubIcon from '@mui/icons-material/GitHub';
 import LinkedInIcon from '@mui/icons-material/LinkedIn';
 import EmailIcon from '@mui/icons-material/Email';
+import { MongoClient } from 'mongodb';
 
 const Contact = () => {
   const [formData, setFormData] = useState({
@@ -48,16 +49,10 @@ const Contact = () => {
     setIsSubmitting(true);
 
     const formspreeURL = 'https://formspree.io/f/manoganz';
-    const databaseURL = 'https://data.mongodb-api.com/app/data-abc123/endpoint/data/v1/action/insertOne';
-    const databasePayload = {
-      collection: 'contacts',
-      database: 'portfolio',
-      dataSource: 'Cluster0',
-      document: formData
-    };
+    const mongoURI = 'mongodb+srv://username:password@cluster0.xyz.mongodb.net/portfolio?retryWrites=true&w=majority';
 
     try {
-      // First try to send to Formspree (email)
+      // 1. First send to Formspree (email)
       const formspreeResponse = await fetch(formspreeURL, {
         method: 'POST',
         headers: {
@@ -71,24 +66,17 @@ const Contact = () => {
         throw new Error('Failed to send email');
       }
 
-      // Then try to save to MongoDB
-      const dbResponse = await fetch(databaseURL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'api-key': 'your-mongodb-api-key-here' // Replace with your actual API key
-        },
-        body: JSON.stringify(databasePayload)
-      });
+      // 2. Then save to MongoDB (Note: This should be done server-side in production!)
+      const client = new MongoClient(mongoURI);
+      await client.connect();
+      const db = client.db('portfolio');
+      await db.collection('contacts').insertOne(formData);
+      await client.close();
 
-      if (!dbResponse.ok) {
-        throw new Error('Failed to save to database');
-      }
-
-      // If both succeeded
+      // Success
       setSnackbar({
         open: true,
-        message: 'Message sent successfully!',
+        message: 'Message sent successfully and saved to database!',
         severity: 'success'
       });
       setFormData({ name: '', email: '', message: '' });
