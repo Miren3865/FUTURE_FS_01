@@ -29,6 +29,8 @@ const Contact = () => {
     severity: 'success',
   });
 
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   const [ref, inView] = useInView({
     triggerOnce: true,
     threshold: 0.1,
@@ -43,12 +45,13 @@ const Contact = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setIsSubmitting(true);
 
     const formspreeURL = 'https://formspree.io/f/manoganz';
     const backendURL = 'http://localhost:5000/api/contact';
 
     try {
-      // Send to Formspree first
+      // Primary submission to Formspree
       const formspreeRes = await fetch(formspreeURL, {
         method: 'POST',
         headers: {
@@ -59,39 +62,36 @@ const Contact = () => {
       });
 
       if (formspreeRes.ok) {
-        // Show success to user
+        // Success - clear form and show success message
+        setFormData({ name: '', email: '', message: '' });
         setSnackbar({
           open: true,
           message: 'Message sent successfully!',
           severity: 'success',
         });
-        setFormData({ name: '', email: '', message: '' });
 
-        // Attempt to send to backend, but don't block success if it fails
-        try {
-          await fetch(backendURL, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(formData),
-          });
-        } catch (backendError) {
-          console.warn('Backend unreachable. Message not stored in DB.', backendError);
-        }
+        // Secondary submission to backend (fire-and-forget)
+        fetch(backendURL, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(formData),
+        })
+          .then(() => console.log('Message also saved to database'))
+          .catch(err => console.warn('Failed to save to database:', err));
       } else {
-        setSnackbar({
-          open: true,
-          message: 'Failed to send message via Formspree.',
-          severity: 'error',
-        });
+        const errorData = await formspreeRes.json();
+        throw new Error(errorData.error || 'Form submission failed');
       }
-    } catch (formspreeError) {
+    } catch (error) {
       setSnackbar({
         open: true,
-        message: 'An error occurred while sending your message. Please try again.',
+        message: error.message || 'An error occurred. Please try again.',
         severity: 'error',
       });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -161,8 +161,9 @@ const Contact = () => {
                   size="large"
                   fullWidth
                   sx={{ mt: 2 }}
+                  disabled={isSubmitting}
                 >
-                  Send Message
+                  {isSubmitting ? 'Sending...' : 'Send Message'}
                 </Button>
               </form>
             </Paper>
