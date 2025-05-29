@@ -42,58 +42,58 @@ const Contact = () => {
   };
 
   const handleSubmit = async (e) => {
-  e.preventDefault();
+    e.preventDefault();
 
-  const formspreeURL = 'https://formspree.io/f/manoganz';
-  const backendURL = 'http://localhost:5000/api/contact';
+    const formspreeURL = 'https://formspree.io/f/manoganz';
+    const backendURL = 'http://localhost:5000/api/contact';
 
-  try {
-    // Send to Formspree first
-    const formspreeRes = await fetch(formspreeURL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Accept: 'application/json',
-      },
-      body: JSON.stringify(formData),
-    });
-
-    if (formspreeRes.ok) {
-      setSnackbar({
-        open: true,
-        message: 'Message sent successfully!',
-        severity: 'success',
+    try {
+      // Send to Formspree first
+      const formspreeRes = await fetch(formspreeURL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+        },
+        body: JSON.stringify(formData),
       });
-      setFormData({ name: '', email: '', message: '' });
 
-      // Attempt backend submission separately (optional, non-critical)
-      try {
-        await fetch(backendURL, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(formData),
+      if (formspreeRes.ok) {
+        // Show success to user
+        setSnackbar({
+          open: true,
+          message: 'Message sent successfully!',
+          severity: 'success',
         });
-      } catch (backendError) {
-        // Log backend failure silently
-        console.error('Backend save failed:', backendError);
+        setFormData({ name: '', email: '', message: '' });
+
+        // Attempt to send to backend, but don't block success if it fails
+        try {
+          await fetch(backendURL, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(formData),
+          });
+        } catch (backendError) {
+          console.warn('Backend unreachable. Message not stored in DB.', backendError);
+        }
+      } else {
+        setSnackbar({
+          open: true,
+          message: 'Failed to send message via Formspree.',
+          severity: 'error',
+        });
       }
-    } else {
+    } catch (formspreeError) {
       setSnackbar({
         open: true,
-        message: 'Failed to send message. Please try again later.',
+        message: 'An error occurred while sending your message. Please try again.',
         severity: 'error',
       });
     }
-  } catch (error) {
-    setSnackbar({
-      open: true,
-      message: 'An error occurred while sending message. Please try again.',
-      severity: 'error',
-    });
-  }
-};
+  };
 
   const handleCloseSnackbar = () => {
     setSnackbar({ ...snackbar, open: false });
