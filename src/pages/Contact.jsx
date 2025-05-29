@@ -42,53 +42,58 @@ const Contact = () => {
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
+  e.preventDefault();
 
-    const formspreeURL = 'https://formspree.io/f/manoganz';
-    const backendURL = 'http://localhost:5000/api/contact';
+  const formspreeURL = 'https://formspree.io/f/manoganz';
+  const backendURL = 'http://localhost:5000/api/contact';
 
-    try {
-      // Send to Formspree
-      const formspreeRes = await fetch(formspreeURL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Accept: 'application/json',
-        },
-        body: JSON.stringify(formData),
-      });
+  try {
+    // Send to Formspree first
+    const formspreeRes = await fetch(formspreeURL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+      },
+      body: JSON.stringify(formData),
+    });
 
-      // Send to your backend (e.g., to store in database)
-      const backendRes = await fetch(backendURL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData),
-      });
-
-      if (formspreeRes.ok && backendRes.ok) {
-        setSnackbar({
-          open: true,
-          message: 'Message sent successfully!',
-          severity: 'success',
-        });
-        setFormData({ name: '', email: '', message: '' });
-      } else {
-        setSnackbar({
-          open: true,
-          message: 'Failed to send message. Please try again later.',
-          severity: 'error',
-        });
-      }
-    } catch (error) {
+    if (formspreeRes.ok) {
       setSnackbar({
         open: true,
-        message: 'An error occurred. Please try again later.',
+        message: 'Message sent successfully!',
+        severity: 'success',
+      });
+      setFormData({ name: '', email: '', message: '' });
+
+      // Attempt backend submission separately (optional, non-critical)
+      try {
+        await fetch(backendURL, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(formData),
+        });
+      } catch (backendError) {
+        // Log backend failure silently
+        console.error('Backend save failed:', backendError);
+      }
+    } else {
+      setSnackbar({
+        open: true,
+        message: 'Failed to send message. Please try again later.',
         severity: 'error',
       });
     }
-  };
+  } catch (error) {
+    setSnackbar({
+      open: true,
+      message: 'An error occurred while sending message. Please try again.',
+      severity: 'error',
+    });
+  }
+};
 
   const handleCloseSnackbar = () => {
     setSnackbar({ ...snackbar, open: false });
