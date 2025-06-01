@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import {
   Container,
@@ -40,62 +40,21 @@ const Contact = () => {
     });
   };
 
-  // Save unsent messages to localStorage
-  const saveToLocalStorage = (data) => {
-    const saved = JSON.parse(localStorage.getItem('unsentMessages')) || [];
-    saved.push(data);
-    localStorage.setItem('unsentMessages', JSON.stringify(saved));
-  };
-
-  const resendLocalMessages = async () => {
-    const unsent = JSON.parse(localStorage.getItem('unsentMessages')) || [];
-    if (!unsent.length) return;
-
-    const stillUnsent = [];
-
-    for (const message of unsent) {
-      try {
-        const res = await fetch('http://localhost:5000/api/contact', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(message),
-        });
-
-        if (!res.ok) {
-          stillUnsent.push(message);
-        }
-      } catch {
-        stillUnsent.push(message);
-      }
-    }
-
-    localStorage.setItem('unsentMessages', JSON.stringify(stillUnsent));
-  };
-
-  useEffect(() => {
-    resendLocalMessages();
-  }, []);
-
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    const messageData = {
-      name: formData.name,
-      email: formData.email,
-      message: formData.message,
-    };
-
     try {
-      const response = await fetch('http://localhost:5000/api/contact', {
+      const response = await fetch('https://formspree.io/f/manoganz', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          Accept: 'application/json',
         },
-        body: JSON.stringify(messageData),
+        body: JSON.stringify({
+          name: formData.name,
+          email: formData.email,
+          message: formData.message,
+        }),
       });
-
       if (response.ok) {
         setSnackbar({
           open: true,
@@ -103,19 +62,18 @@ const Contact = () => {
           severity: 'success',
         });
         setFormData({ name: '', email: '', message: '' });
-
-        // Try to resend any previously saved messages
-        resendLocalMessages();
       } else {
-        throw new Error('Server error');
+        setSnackbar({
+          open: true,
+          message: 'Failed to send message. Please try again later.',
+          severity: 'error',
+        });
       }
     } catch (error) {
-      saveToLocalStorage(messageData);
       setSnackbar({
         open: true,
-        message:
-          'Server is unreachable. Message saved locally and will be sent later.',
-        severity: 'warning',
+        message: 'An error occurred. Please try again later.',
+        severity: 'error',
       });
     }
   };
@@ -125,21 +83,9 @@ const Contact = () => {
   };
 
   const socialLinks = [
-    {
-      icon: <GitHubIcon />,
-      url: 'https://github.com/Miren3865',
-      label: 'GitHub',
-    },
-    {
-      icon: <LinkedInIcon />,
-      url: 'https://www.linkedin.com/in/miren-savani-05934128a/',
-      label: 'LinkedIn',
-    },
-    {
-      icon: <EmailIcon />,
-      url: 'mailto:savanimiren7@gmail.com',
-      label: 'Email',
-    },
+    { icon: <GitHubIcon />, url: 'https://github.com/Miren3865', label: 'GitHub' },
+    { icon: <LinkedInIcon />, url: 'https://www.linkedin.com/in/miren-savani-05934128a/', label: 'LinkedIn' },
+    { icon: <EmailIcon />, url: 'mailto:savanimiren7@gmail.com', label: 'Email' },
   ];
 
   return (
@@ -251,4 +197,4 @@ const Contact = () => {
   );
 };
 
-export default Contact;
+export default Contact; 
