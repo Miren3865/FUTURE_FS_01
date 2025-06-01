@@ -1,20 +1,20 @@
-import EmailIcon from '@mui/icons-material/Email';
-import GitHubIcon from '@mui/icons-material/GitHub';
-import LinkedInIcon from '@mui/icons-material/LinkedIn';
+import { useState } from 'react';
+import { motion } from 'framer-motion';
 import {
-  Alert,
-  Box,
-  Button,
   Container,
+  Typography,
   Grid,
+  TextField,
+  Button,
+  Box,
   Paper,
   Snackbar,
-  TextField,
-  Typography,
+  Alert,
 } from '@mui/material';
-import { motion } from 'framer-motion';
-import { useState } from 'react';
 import { useInView } from 'react-intersection-observer';
+import GitHubIcon from '@mui/icons-material/GitHub';
+import LinkedInIcon from '@mui/icons-material/LinkedIn';
+import EmailIcon from '@mui/icons-material/Email';
 
 const Contact = () => {
   const [formData, setFormData] = useState({
@@ -22,14 +22,11 @@ const Contact = () => {
     email: '',
     message: '',
   });
-
   const [snackbar, setSnackbar] = useState({
     open: false,
     message: '',
     severity: 'success',
   });
-
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [ref, inView] = useInView({
     triggerOnce: true,
@@ -45,21 +42,19 @@ const Contact = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setIsSubmitting(true);
-
-    const backendURL = 'http://localhost:5000/api/contact';
-
     try {
-      const response = await fetch(backendURL, {
+      const response = await fetch('https://formspree.io/f/manoganz', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          Accept: 'application/json',
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          name: formData.name,
+          email: formData.email,
+          message: formData.message,
+        }),
       });
-
-      const data = await response.json();
-
       if (response.ok) {
         setSnackbar({
           open: true,
@@ -68,17 +63,18 @@ const Contact = () => {
         });
         setFormData({ name: '', email: '', message: '' });
       } else {
-        throw new Error(data.error || 'Failed to send message');
+        setSnackbar({
+          open: true,
+          message: 'Failed to send message. Please try again later.',
+          severity: 'error',
+        });
       }
     } catch (error) {
-      console.error('Error:', error);
       setSnackbar({
         open: true,
-        message: error.message || 'An error occurred. Please try again later.',
+        message: 'An error occurred. Please try again later.',
         severity: 'error',
       });
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
@@ -119,7 +115,6 @@ const Contact = () => {
                   onChange={handleChange}
                   margin="normal"
                   required
-                  disabled={isSubmitting}
                 />
                 <TextField
                   fullWidth
@@ -130,7 +125,6 @@ const Contact = () => {
                   onChange={handleChange}
                   margin="normal"
                   required
-                  disabled={isSubmitting}
                 />
                 <TextField
                   fullWidth
@@ -142,7 +136,6 @@ const Contact = () => {
                   onChange={handleChange}
                   margin="normal"
                   required
-                  disabled={isSubmitting}
                 />
                 <Button
                   type="submit"
@@ -151,9 +144,8 @@ const Contact = () => {
                   size="large"
                   fullWidth
                   sx={{ mt: 2 }}
-                  disabled={isSubmitting}
                 >
-                  {isSubmitting ? 'Sending...' : 'Send Message'}
+                  Send Message
                 </Button>
               </form>
             </Paper>
