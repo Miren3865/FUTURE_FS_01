@@ -11,7 +11,7 @@ const skills = [
   { category: 'Frontend', icon: <WebIcon color="primary" />, items: ['React', 'JavaScript', 'HTML5', 'CSS3'] },
   { category: 'Backend', icon: <CodeIcon color="secondary" />, items: ['Node.js', 'Express', 'Python', 'REST APIs'] },
   { category: 'Database', icon: <StorageIcon sx={{ color: '#4caf50' }} />, items: ['MongoDB', 'MySQL', 'PostgreSQL'] },
-  { category: 'Tools', icon: <BuildIcon sx={{ color: '#ffb300' }} />, items: ['Git', 'Docker', 'VS Code', 'Figma'] },
+  { category: 'Tools', icon: <BuildIcon sx={{ color: '#ffb300' }} />, items: ['Git', 'Docker', 'VS Code'] },
 ];
 
 const certificates = [
